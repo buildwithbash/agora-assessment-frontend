@@ -152,8 +152,6 @@
     </div>
 
     <script>
-        const ANTHROPIC_API_KEY = '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';
-        
         let conversationHistory = [];
         let sessionData = {
             personalResponses: [],
@@ -163,36 +161,9 @@
             stage: 'introduction'
         };
 
-        // Assessment questions and logic
-        const personalQuestions = [
-            "Tell me about a time in your life when you were most proud of a decision you made. What was the situation, what choice did you make, and why does that decision still stand out to you today?",
-            "What principles or beliefs guide your personal relationships? How do you decide who to trust and invest your time in?",
-            "Describe a moment when you had to stand up for something you believed in, even when it was difficult or unpopular. What drove you to take that stand?",
-            "When you think about the legacy you want to leave - how you want to be remembered by family, friends, and colleagues - what matters most to you?",
-            "What activities or situations make you feel most energized and alive? What does that tell you about what you value?"
-        ];
-
-        const businessQuestions = [
-            "What behaviors, actions, or attitudes do you personally reward or celebrate in your workplace? What do you find yourself recognizing or praising when you see it?",
-            "If I asked your team members or colleagues what your company truly stands for - not what's on the website, but what they actually experience - what would they say?",
-            "Tell me about a business decision your organization made that you felt particularly good about. What made that decision feel 'right' to you?",
-            "What frustrates you most about how business is typically conducted in your industry? What would you do differently?",
-            "When your company is performing at its absolute best, what does that look like? What enables those peak moments?"
-        ];
-
         async function callClaude(messages) {
             try {
-                const response = await fetch('https://api.anthropic.com/v1/messages', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-api-key': ANTHROPIC_API_KEY,
-                        'anthropic-version': '2023-06-01'
-                    },
-                    body: JSON.stringify({
-                        model: 'claude-3-sonnet-20240229',
-                        max_tokens: 1000,
-                        system: `You are the Agora Core Values Coach, helping users identify their top personal and business core values through a reflective conversation.
+                const systemPrompt = `You are the Agora Core Values Coach, helping users identify their top personal and business core values through a reflective conversation.
 
 Step 1a: Thank them for taking the time to complete this exercise, and remind them that honest, reflective answers will allow you to provide the best insights. Encourage them to be as detailed as they can.
 
@@ -208,6 +179,8 @@ Step 5: Output a final list of 5 personal and 5 business core values that best r
 
 Be conversational and warm, but always professional. Stay focused on surfacing values, not therapy or advice.
 
+Our Agora advisors are Christians and really embody that in our advisory practice, but we aren't preachy or judgmental in any capacity. It's important to know this because many of our clients are also Christian and we, as advisors, encourage them to embody Christ-like values in their business. However, unless the user offers information about their faith, this tool should not bring up the topic.
+
 Guidelines:
 - Gently guide users through two distinct but interconnected value discovery journeys: personal and business
 - Encourage storytelling and self-reflection in response to open-ended questions
@@ -217,6 +190,7 @@ Guidelines:
 - Stay non-judgmental and empathetic in tone
 - Make clear distinctions between personal values and business values
 - Adapt language and tone to the user's communication style but maintain a respectful, coaching presence
+- Refrain from offering opinions or commenting on anything political
 
 When you reach Step 5 (final analysis), format your response as follows:
 
@@ -244,8 +218,16 @@ When you reach Step 5 (final analysis), format your response as follows:
 
 ---
 
-These insights will be valuable as you work with your Agora advisor to align your leadership approach and prepare your organization for future success.`,
-                        messages: messages
+These insights will be valuable as you work with your Agora advisor to align your leadership approach and prepare your organization for future success.`;
+
+                const response = await fetch('/api/claude', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        messages: messages,
+                        systemPrompt: systemPrompt
                     })
                 });
 
@@ -254,7 +236,7 @@ These insights will be valuable as you work with your Agora advisor to align you
                 }
 
                 const data = await response.json();
-                return data.content[0].text;
+                return data.response;
             } catch (error) {
                 console.error('Error calling Claude:', error);
                 return "I apologize, but I'm having trouble connecting to our AI system right now. Please try refreshing the page or contact support if the problem persists.";
